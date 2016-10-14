@@ -32,7 +32,7 @@ vector<Instance*> Parser::parseInputFile(string filePath) {
                     inputFile.getline(str, 255);
                     parameterLine = Util::split(str, ' ');
                     int switcher = 0;
-                    Job * job = new Job(l);
+                    int proc, earl, tard;
                     for (int m = 0; m < parameterLine.size(); m++) {
                         if (!Util::isNumeric(parameterLine[m], 10)) {
                             continue;
@@ -40,13 +40,13 @@ vector<Instance*> Parser::parseInputFile(string filePath) {
                         int parameter = atoi(parameterLine[m].c_str());
                         switch (switcher) {
                             case 0:
-                                job->processingTime = parameter;
+                                proc = parameter;
                                 break;
                             case 1:
-                                job->earlinessPenalty = parameter;
+                                earl = parameter;
                                 break;
                             case 2:
-                                job->tardinessPenalty = parameter;
+                                tard = parameter;
                                 break;
                             default:
                                 throw runtime_error("Excess parameters");
@@ -54,7 +54,7 @@ vector<Instance*> Parser::parseInputFile(string filePath) {
                         }
                         switcher++;
                     }
-                    job->updateCompletionTime();
+                    Job * job = new Job(l, proc, earl, tard);
                     instance->jobs[l] = job;
                 }
                 instances[j] = instance;

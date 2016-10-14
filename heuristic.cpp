@@ -52,12 +52,7 @@ void Heuristic::biskup1() {
     vector<Job*> A = vector<Job*> (n);
     vector<Job*> B = vector<Job*> (0);
     for (int i = 0; i < n; i++) {
-        Job * job = instance->jobs[i];
-        job->procEarlRatio =
-                (float) job->processingTime / job->earlinessPenalty;
-        job->procTardRatio =
-                (float) job->processingTime / job->tardinessPenalty;
-        A[i] = job;
+        A[i] = instance->jobs[i];
     }
 
     bool targetDecreased = true;
@@ -96,32 +91,24 @@ void Heuristic::biskup1() {
 }
 
 void Heuristic::biskup2() {
-    int n = this->instance->n;
+    int n = this->instance->n, d = this->instance->d;
     vector<Job*> P = vector<Job*> (n);
     vector<Job*> A = vector<Job*> (0);
     vector<Job*> B = vector<Job*> (0);
     for (int i = 0; i < n; i++) {
-        Job * job = instance->jobs[i];
-        job->procEarlRatio =
-                (float) job->processingTime / job->earlinessPenalty;
-        job->procTardRatio =
-                (float) job->processingTime / job->tardinessPenalty;
-        job->tardEarlRatio =
-                (float) job->tardinessPenalty / job->earlinessPenalty;
-        P[i] = job;
+        P[i] = instance->jobs[i];
     }
     sort(P.begin(), P.end(), tardiness_earliness_non_increasing());
 
-    bool shiftedJob = true;
-    while (shiftedJob and B.size() < n / 2) {
-        shiftedJob = false;
-        if (instance->d - Heuristic::sumProcessingTimes(B)
-                < P[0]->processingTime) {
+    int shiftIndex = 0;
+    while (B.size() < n / 2 and shiftIndex < P.size()) {
+        if (d - Heuristic::sumProcessingTimes(B) < P[shiftIndex]->processingTime) {
+            shiftIndex++;
             continue;
         }
-        B.push_back(P[0]);
-        P.erase(P.begin());
-        shiftedJob = true;
+        B.push_back(P[shiftIndex]);
+        P.erase(P.begin() + shiftIndex);
+        shiftIndex = 0;
     }
     for (int i = 0; i < P.size(); i++) {
         A.push_back(P[i]);
@@ -132,7 +119,7 @@ void Heuristic::biskup2() {
     instance->sequenceJobsFirstToLast(A, instance->d);
     instance->sequenceJobsLastToFirst(B, instance->d);
 
-    if (!shiftedJob) {
+    if (B.size() < n / 2) {
         return;
     }
 
@@ -147,6 +134,10 @@ void Heuristic::biskup2() {
         instance->sequenceJobsLastToFirst(B1, instance->d);
         target = instance->calculateTarget();
         if (target <= lowestTarget) {
+            if (instance->d - Heuristic::sumProcessingTimes(B)
+                < P[0]->processingTime) {
+                break;
+            }
             P.erase(P.begin());
             A = A1;
             B = B1;
