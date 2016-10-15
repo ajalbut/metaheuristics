@@ -59,3 +59,15 @@ int Instance::calculateTarget() {
     }
     return target;
 }
+
+int Instance::calculatePartialTarget(vector <Job*> J) {
+    int target = 0;
+    for (int i = 0; i < J.size(); i++) {
+        Job * job = J[i];
+        int earliness = max(this->d - job->completionTime, 0);
+        int tardiness = max(job->completionTime - this->d, 0);
+        target += earliness * job->earlinessPenalty;
+        target += tardiness * job->tardinessPenalty;
+    }
+    return target;
+}

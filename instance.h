@@ -14,6 +14,7 @@ public:
     void sequenceJobsLastToFirst(vector<Job*> jobs, int completionTime);
     void printSchedule();
     int calculateTarget();
+    int calculatePartialTarget(vector<Job*> J);
 };
 
 #endif /* INSTANCE_H */

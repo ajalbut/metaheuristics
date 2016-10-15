@@ -35,6 +35,18 @@ struct tard_earl_non_increasing {
     }
 };
 
+struct min_proc_ratio_non_decreasing {
+
+    bool operator()(Job * a, Job * b) {
+        float minRatioA = min(a->procEarlRatio, a->procTardRatio),
+                minRatioB = min(b->procEarlRatio, b->procTardRatio);
+        if (minRatioA != minRatioB) {
+            return minRatioA < minRatioB;
+        }
+        return a->id < b->id;
+    }
+};
+
 Heuristic::Heuristic(Instance * instance, string type) {
     this->instance = instance;
     this->type = type;
@@ -45,6 +57,8 @@ void Heuristic::calculateSchedule() {
         this->biskup1();
     } else if (this->type == "biskup2") {
         this->biskup2();
+    } else if (this->type == "construct") {
+        this->construct();
     } else {
         throw runtime_error("Heuristic not found");
     }
@@ -138,7 +152,39 @@ void Heuristic::biskup2() {
 }
 
 void Heuristic::construct() {
-    
+    int n = this->instance->n, d = this->instance->d;
+    vector<Job*> P = vector<Job*> (n);
+    vector<Job*> A = vector<Job*> (0);
+    vector<Job*> B = vector<Job*> (0);
+    for (int i = 0; i < n; i++) {
+        P[i] = instance->jobs[i];
+    }
+    sort(P.begin(), P.end(), min_proc_ratio_non_decreasing());
+    while (P.size()) {
+        vector<Job*> A1 = A, B1 = B;
+
+        if (d - Heuristic::sumProcessingTimes(B) < P[0]->processingTime) {
+            A.push_back(P[0]);
+        } else {
+            A1.push_back(P[0]);
+            Heuristic::sequenceJobsVShaped(A1, B);
+            A1.insert(A1.end(), B.begin(), B.end());
+            int jobAfterTarget = this->instance->calculatePartialTarget(A1);
+
+            B1.push_back(P[0]);
+            Heuristic::sequenceJobsVShaped(A, B1);
+            B1.insert(B1.end(), A.begin(), A.end());
+            int jobBeforeTarget = this->instance->calculatePartialTarget(B1);
+
+            if (jobAfterTarget < jobBeforeTarget) {
+                A.push_back(P[0]);
+            } else {
+                B.push_back(P[0]);
+            }
+        }
+        P.erase(P.begin());
+    }
+    Heuristic::sequenceJobsVShaped(A, B);
 }
 
 void Heuristic::sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B) {
