@@ -15,18 +15,6 @@ void Instance::calculateDueTime() {
     this->d = floor(d);
 }
 
-int Instance::calculateTarget() {
-    int target = 0;
-    for (int i = 0; i < this->n; i++) {
-        Job * job = this->jobs[i];
-        int earliness = max(this->d - job->completionTime, 0);
-        int tardiness = max(job->completionTime - this->d, 0);
-        target += earliness * job->earlinessPenalty;
-        target += tardiness * job->tardinessPenalty;
-    }
-    return target;
-}
-
 void Instance::sequenceJobsFirstToLast(vector<Job*> jobs, int startTime) {
     if (!jobs.size()) {
         return;
@@ -52,10 +40,22 @@ void Instance::sequenceJobsLastToFirst(vector<Job*> jobs, int completionTime) {
     }
 }
 
-void Instance::printScheduling() {
+void Instance::printSchedule() {
     for (int i = 0; i < this->n; i++) {
         Job * job = this->jobs[i];
-        cout << job->id << ": start " << job->startTime 
+        cout << job->id << ": start " << job->startTime
                 << ", completion " << job->completionTime << endl;
     }
+}
+
+int Instance::calculateTarget() {
+    int target = 0;
+    for (int i = 0; i < this->n; i++) {
+        Job * job = this->jobs[i];
+        int earliness = max(this->d - job->completionTime, 0);
+        int tardiness = max(job->completionTime - this->d, 0);
+        target += earliness * job->earlinessPenalty;
+        target += tardiness * job->tardinessPenalty;
+    }
+    return target;
 }

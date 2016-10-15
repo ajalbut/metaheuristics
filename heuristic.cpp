@@ -22,13 +22,16 @@ struct proc_tard_ratios_non_decreasing {
     }
 };
 
-struct tardiness_earliness_non_increasing {
+struct tard_earl_non_increasing {
 
     bool operator()(Job * a, Job * b) {
         if (a->tardEarlRatio != b->tardEarlRatio) {
             return a->tardEarlRatio > b->tardEarlRatio;
         }
-        return a->tardinessPenalty > b->tardinessPenalty;
+        if (a->tardinessPenalty != b->tardinessPenalty) {
+            return a->tardinessPenalty > b->tardinessPenalty;
+        }
+        return a->id > b->id;
     }
 };
 
@@ -48,7 +51,7 @@ void Heuristic::calculateSchedule() {
 }
 
 void Heuristic::biskup1() {
-    int n = this->instance->n;
+    int n = this->instance->n, d = this->instance->d;
     vector<Job*> A = vector<Job*> (n);
     vector<Job*> B = vector<Job*> (0);
     for (int i = 0; i < n; i++) {
@@ -65,13 +68,9 @@ void Heuristic::biskup1() {
             Job * testShiftedJob = A[i];
             A1.erase(A1.begin() + i);
             B1.push_back(testShiftedJob);
-            sort(A1.begin(), A1.end(), proc_tard_ratios_non_decreasing());
-            sort(B1.begin(), B1.end(), proc_earl_ratios_non_increasing());
-            instance->sequenceJobsFirstToLast(A1, instance->d);
-            instance->sequenceJobsLastToFirst(B1, instance->d);
+            Heuristic::sequenceJobsVShaped(A1, B1);
             int target = instance->calculateTarget();
-            if (target < lowestTarget and
-                    instance->d - Heuristic::sumProcessingTimes(B1)
+            if (target < lowestTarget and d - Heuristic::sumProcessingTimes(B1)
                     >= Heuristic::minProcessingTime(A1)) {
                 targetDecreased = true;
                 lowestTarget = target;
@@ -84,10 +83,7 @@ void Heuristic::biskup1() {
             B.push_back(shiftedJob);
         }
     }
-    sort(A.begin(), A.end(), proc_tard_ratios_non_decreasing());
-    sort(B.begin(), B.end(), proc_earl_ratios_non_increasing());
-    instance->sequenceJobsFirstToLast(A, instance->d);
-    instance->sequenceJobsLastToFirst(B, instance->d);
+    Heuristic::sequenceJobsVShaped(A, B);
 }
 
 void Heuristic::biskup2() {
@@ -98,11 +94,12 @@ void Heuristic::biskup2() {
     for (int i = 0; i < n; i++) {
         P[i] = instance->jobs[i];
     }
-    sort(P.begin(), P.end(), tardiness_earliness_non_increasing());
+    sort(P.begin(), P.end(), tard_earl_non_increasing());
 
     int shiftIndex = 0;
     while (B.size() < n / 2 and shiftIndex < P.size()) {
-        if (d - Heuristic::sumProcessingTimes(B) < P[shiftIndex]->processingTime) {
+        if (d - Heuristic::sumProcessingTimes(B)
+                < P[shiftIndex]->processingTime) {
             shiftIndex++;
             continue;
         }
@@ -114,10 +111,7 @@ void Heuristic::biskup2() {
         A.push_back(P[i]);
     }
 
-    sort(A.begin(), A.end(), proc_tard_ratios_non_decreasing());
-    sort(B.begin(), B.end(), proc_earl_ratios_non_increasing());
-    instance->sequenceJobsFirstToLast(A, instance->d);
-    instance->sequenceJobsLastToFirst(B, instance->d);
+    Heuristic::sequenceJobsVShaped(A, B);
 
     if (B.size() < n / 2) {
         return;
@@ -128,14 +122,10 @@ void Heuristic::biskup2() {
         vector<Job*> A1 = P, B1 = B;
         A1.erase(A1.begin());
         B1.push_back(P[0]);
-        sort(A1.begin(), A1.end(), proc_tard_ratios_non_decreasing());
-        sort(B1.begin(), B1.end(), proc_earl_ratios_non_increasing());
-        instance->sequenceJobsFirstToLast(A1, instance->d);
-        instance->sequenceJobsLastToFirst(B1, instance->d);
+        Heuristic::sequenceJobsVShaped(A1, B1);
         target = instance->calculateTarget();
         if (target <= lowestTarget) {
-            if (instance->d - Heuristic::sumProcessingTimes(B)
-                < P[0]->processingTime) {
+            if (d - Heuristic::sumProcessingTimes(B) < P[0]->processingTime) {
                 break;
             }
             P.erase(P.begin());
@@ -144,10 +134,18 @@ void Heuristic::biskup2() {
             lowestTarget = target;
         }
     }
+    Heuristic::sequenceJobsVShaped(A, B);
+}
+
+void Heuristic::construct() {
+    
+}
+
+void Heuristic::sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B) {
     sort(A.begin(), A.end(), proc_tard_ratios_non_decreasing());
     sort(B.begin(), B.end(), proc_earl_ratios_non_increasing());
-    instance->sequenceJobsFirstToLast(A, instance->d);
-    instance->sequenceJobsLastToFirst(B, instance->d);
+    this->instance->sequenceJobsFirstToLast(A, this->instance->d);
+    this->instance->sequenceJobsLastToFirst(B, this->instance->d);
 }
 
 int Heuristic::sumProcessingTimes(vector<Job*> jobs) {

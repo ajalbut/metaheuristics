@@ -25,9 +25,9 @@ void Controller::runInstance(Instance * instance) {
 void Controller::print() {
     for (int i = 0; i< this->instances.size(); i++) {
         Instance * instance = this->instances[i];
-        cout << "Instance " << i << ":" << endl;
+        cout << "Instance " << i + 1 << ":" << endl;
         cout << "Due date: " << instance->d << endl;
-        instance->printScheduling();
+        instance->printSchedule();
         cout << "Target: " << instance->calculateTarget() << endl;
         cout << endl;
     }

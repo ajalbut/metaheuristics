@@ -9,10 +9,10 @@ public:
     float h;
     vector<Job*> jobs;
     Instance(int n);
+    void calculateDueTime();
     void sequenceJobsFirstToLast(vector<Job*> jobs, int startTime);
     void sequenceJobsLastToFirst(vector<Job*> jobs, int completionTime);
-    void calculateDueTime();
-    void printScheduling();
+    void printSchedule();
     int calculateTarget();
 };
 

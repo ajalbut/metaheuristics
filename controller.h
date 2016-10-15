@@ -7,9 +7,9 @@ class Controller {
     float h;
     vector<Instance*> instances;
 public:
-    Controller(string inputPath, string heuristic, float h);
-    void runInstance(Instance * instance);
+    Controller(string inputPath, string heuristicType, float h);
     void run();
+    void runInstance(Instance * instance);
     void print();
 };
 
