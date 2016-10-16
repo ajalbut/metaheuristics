@@ -1,7 +1,7 @@
 #include "heuristic.h"
 #include "controller.h"
 
-Controller::Controller(string inputPath, string heuristicType, float h) {
+Controller::Controller(string inputPath, int heuristicType, float h) {
     this->instances = Parser::parseInputFile(inputPath);
     this->heuristicType = heuristicType;
     this->h = h;

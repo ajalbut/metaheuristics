@@ -5,8 +5,8 @@
 class Heuristic {
 public:
     Instance * instance;
-    string type;
-    Heuristic(Instance * instance, string type);
+    int type;
+    Heuristic(Instance * instance, int type);
     void calculateSchedule();
     void biskup1();
     void biskup2();

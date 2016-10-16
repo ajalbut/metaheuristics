@@ -3,11 +3,12 @@
 #include "parser.h"
 
 class Controller {
-    string inputPath, heuristicType;
+    string inputPath;
+    int heuristicType;
     float h;
     vector<Instance*> instances;
 public:
-    Controller(string inputPath, string heuristicType, float h);
+    Controller(string inputPath, int heuristicType, float h);
     void run();
     void runInstance(Instance * instance);
     void print();

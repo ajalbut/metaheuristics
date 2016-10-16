@@ -47,17 +47,17 @@ struct min_proc_ratio_non_decreasing {
     }
 };
 
-Heuristic::Heuristic(Instance * instance, string type) {
+Heuristic::Heuristic(Instance * instance, int type) {
     this->instance = instance;
     this->type = type;
 }
 
 void Heuristic::calculateSchedule() {
-    if (this->type == "biskup1") {
+    if (this->type == 1) {
         this->biskup1();
-    } else if (this->type == "biskup2") {
+    } else if (this->type == 2) {
         this->biskup2();
-    } else if (this->type == "construct") {
+    } else if (this->type == 3) {
         this->construct();
     } else {
         throw runtime_error("Heuristic not found");
