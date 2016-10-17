@@ -3,15 +3,13 @@
 #include "parser.h"
 
 class Controller {
-    string inputPath;
-    int heuristicType;
-    float h;
     vector<Instance*> instances;
 public:
-    Controller(string inputPath, int heuristicType, float h);
-    void run();
-    void runInstance(Instance * instance);
-    void print();
+    Controller();
+    void runAll();
+    void run(int heuristicType, string n, float h, bool printSchedule);
+    void loadInstances(string inputPath);
+    void runInstance(Instance * instance, int heuristicType);
 };
 
 #endif /* CONTROLLER_H */
