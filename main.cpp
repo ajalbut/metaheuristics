@@ -13,18 +13,21 @@ int main(int argc, char** argv) {
         cout << "[1]: Biskup/Feldmann 1" << endl;
         cout << "[2]: Biskup/Feldmann 2" << endl;
         cout << "[3]: Constructive - min(proc/earl, proc/tard)" << endl;
+        cout << "[-1]: Benchmark mode for [1]" << endl;
+        cout << "[-2]: Benchmark mode for [2]" << endl;
+        cout << "[-3]: Benchmark mode for [3]" << endl;
         cin >> heuristicType;
     }
 
     if (argc > 2) {
         n = argv[2];
-    } else if (heuristicType != 0) {
+    } else if (heuristicType > 0) {
         cout << "Please enter n value:" << endl;
         cin >> n;
     }
     if (argc > 3) {
         h = atof(argv[3]);
-    } else if (heuristicType != 0) {
+    } else if (heuristicType > 0) {
         cout << "Please enter h value:" << endl;
         cin >> h;
     }
@@ -32,8 +35,10 @@ int main(int argc, char** argv) {
     Controller * controller = new Controller();
     if (heuristicType == 0) {
         controller->runAll();
+    } else if (heuristicType < 0) {
+        controller->runBenchmark(heuristicType);
     } else {
-        controller->run(heuristicType, n, h, true);
+        controller->run(heuristicType, n, h, true, true);
     }
 
     return 0;

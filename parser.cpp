@@ -65,3 +65,26 @@ vector<Instance*> Parser::parseInputFile(string filePath) {
 
     return instances;
 }
+
+vector<vector<int> > Parser::parseUpperBoundFile(string filePath) {
+    ifstream inputFile;
+    char str[255];
+    vector<string> instanceLine;
+    vector<vector<int> > upperBounds;
+
+    inputFile.open(filePath.c_str());
+    while (inputFile.getline(str, 255)) {
+        instanceLine = Util::split(str, ' ');
+        vector<int> instanceUpperBounds;
+        for (int i = 0; i < instanceLine.size(); i++) {
+            if (!Util::isNumeric(instanceLine[i], 10)) {
+                continue;
+            }
+            instanceUpperBounds.push_back(atoi(instanceLine[i].c_str()));
+        }
+        upperBounds.push_back(instanceUpperBounds);
+    }
+    inputFile.close();
+
+    return upperBounds;
+}

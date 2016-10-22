@@ -6,6 +6,7 @@
 class Parser {
 public:
     static vector<Instance*> parseInputFile(string filePath);
+    static vector<vector<int> > parseUpperBoundFile(string filePath);
 };
 
 #endif /* PARSER_H */
