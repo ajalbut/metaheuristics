@@ -65,11 +65,10 @@ void Heuristic::calculateSchedule() {
 }
 
 void Heuristic::biskup1() {
-    int n = this->instance->n, d = this->instance->d;
-    vector<Job*> A = vector<Job*> (n);
-    vector<Job*> B = vector<Job*> (0);
-    for (int i = 0; i < n; i++) {
-        A[i] = instance->jobs[i];
+    this->A = vector<Job*> ();
+    this->B = vector<Job*> ();
+    for (int i = 0; i < this->instance->n; i++) {
+        this->A.push_back(this->instance->jobs[i]);
     }
 
     bool targetDecreased = true;
@@ -77,114 +76,113 @@ void Heuristic::biskup1() {
     int lowestTarget = instance->calculateTarget();
     while (targetDecreased) {
         targetDecreased = false;
-        for (int i = 0; i < A.size(); i++) {
-            vector<Job*> A1 = A, B1 = B;
-            Job * testShiftedJob = A[i];
+        for (int i = 0; i < this->A.size(); i++) {
+            vector<Job*> A1 = this->A, B1 = this->B;
+            if (!Heuristic::earlyJobFits(A1[i])) {
+                break;
+            }
+            B1.push_back(A1[i]);
             A1.erase(A1.begin() + i);
-            B1.push_back(testShiftedJob);
             Heuristic::sequenceJobsVShaped(A1, B1);
             int target = instance->calculateTarget();
-            if (target < lowestTarget and d - Heuristic::sumProcessingTimes(B1)
-                    >= Heuristic::minProcessingTime(A1)) {
+            if (target < lowestTarget) {
                 targetDecreased = true;
                 lowestTarget = target;
                 shiftIndex = i;
             }
         }
         if (targetDecreased) {
-            Job * shiftedJob = A[shiftIndex];
-            A.erase(A.begin() + shiftIndex);
-            B.push_back(shiftedJob);
+            Job * shiftedJob = this->A[shiftIndex];
+            this->A.erase(this->A.begin() + shiftIndex);
+            this->B.push_back(shiftedJob);
         }
     }
-    Heuristic::sequenceJobsVShaped(A, B);
+    Heuristic::sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::biskup2() {
-    int n = this->instance->n, d = this->instance->d;
-    vector<Job*> P = vector<Job*> (n);
-    vector<Job*> A = vector<Job*> (0);
-    vector<Job*> B = vector<Job*> (0);
+    int n = this->instance->n;
+    vector<Job*> P = vector<Job*> ();
+    this->A = vector<Job*> ();
+    this->B = vector<Job*> ();
     for (int i = 0; i < n; i++) {
-        P[i] = instance->jobs[i];
+        P.push_back(instance->jobs[i]);
     }
     sort(P.begin(), P.end(), tard_earl_non_increasing());
 
     int shiftIndex = 0;
-    while (B.size() < n / 2 and shiftIndex < P.size()) {
-        if (d - Heuristic::sumProcessingTimes(B)
-                < P[shiftIndex]->processingTime) {
+    while (this->B.size() < n / 2 and shiftIndex < P.size()) {
+        if (!Heuristic::earlyJobFits(P[shiftIndex])) {
             shiftIndex++;
             continue;
         }
-        B.push_back(P[shiftIndex]);
+        this->B.push_back(P[shiftIndex]);
         P.erase(P.begin() + shiftIndex);
         shiftIndex = 0;
     }
     for (int i = 0; i < P.size(); i++) {
-        A.push_back(P[i]);
+        this->A.push_back(P[i]);
     }
 
-    Heuristic::sequenceJobsVShaped(A, B);
+    Heuristic::sequenceJobsVShaped(this->A, this->B);
 
-    if (B.size() < n / 2) {
+    if (this->B.size() < n / 2) {
         return;
     }
 
     int target = 0, lowestTarget = instance->calculateTarget();
     while (target <= lowestTarget) {
-        vector<Job*> A1 = P, B1 = B;
+        vector<Job*> A1 = P, B1 = this->B;
         A1.erase(A1.begin());
         B1.push_back(P[0]);
         Heuristic::sequenceJobsVShaped(A1, B1);
         target = instance->calculateTarget();
         if (target <= lowestTarget) {
-            if (d - Heuristic::sumProcessingTimes(B) < P[0]->processingTime) {
+            if (!Heuristic::earlyJobFits(P[0])) {
                 break;
             }
             P.erase(P.begin());
-            A = A1;
-            B = B1;
+            this->A = A1;
+            this->B = B1;
             lowestTarget = target;
         }
     }
-    Heuristic::sequenceJobsVShaped(A, B);
+    Heuristic::sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::construct() {
-    int n = this->instance->n, d = this->instance->d;
-    vector<Job*> P = vector<Job*> (n);
-    vector<Job*> A = vector<Job*> (0);
-    vector<Job*> B = vector<Job*> (0);
-    for (int i = 0; i < n; i++) {
-        P[i] = instance->jobs[i];
+    vector<Job*> P = vector<Job*> ();
+    this->A = vector<Job*> ();
+    this->B = vector<Job*> ();
+    for (int i = 0; i < this->instance->n; i++) {
+        P.push_back(instance->jobs[i]);
     }
     sort(P.begin(), P.end(), min_proc_ratio_non_decreasing());
     while (P.size()) {
-        vector<Job*> A1 = A, B1 = B;
+        vector<Job*> A1 = this->A, B1 = this->B;
 
-        if (d - Heuristic::sumProcessingTimes(B) < P[0]->processingTime) {
-            A.push_back(P[0]);
+        if (!Heuristic::earlyJobFits(P[0])) {
+            this->A.push_back(P[0]);
         } else {
             A1.push_back(P[0]);
-            Heuristic::sequenceJobsVShaped(A1, B);
-            A1.insert(A1.end(), B.begin(), B.end());
+            Heuristic::sequenceJobsVShaped(A1, this->B);
+            A1.insert(A1.end(), this->B.begin(), this->B.end());
             int jobAfterTarget = this->instance->calculatePartialTarget(A1);
 
             B1.push_back(P[0]);
-            Heuristic::sequenceJobsVShaped(A, B1);
-            B1.insert(B1.end(), A.begin(), A.end());
+            Heuristic::sequenceJobsVShaped(this->A, B1);
+            B1.insert(B1.end(), this->A.begin(), this->A.end());
             int jobBeforeTarget = this->instance->calculatePartialTarget(B1);
 
             if (jobAfterTarget < jobBeforeTarget) {
-                A.push_back(P[0]);
+                this->A.push_back(P[0]);
             } else {
-                B.push_back(P[0]);
+                this->B.push_back(P[0]);
             }
         }
         P.erase(P.begin());
     }
-    Heuristic::sequenceJobsVShaped(A, B);
+    Heuristic::sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B) {
@@ -202,12 +200,7 @@ int Heuristic::sumProcessingTimes(vector<Job*> jobs) {
     return totalTime;
 };
 
-int Heuristic::minProcessingTime(vector<Job*> jobs) {
-    int minTime = 0;
-    for (int i = 0; i < jobs.size(); i++) {
-        if (!minTime or minTime > jobs[i]->processingTime) {
-            minTime = jobs[i]->processingTime;
-        }
-    }
-    return minTime;
+bool Heuristic::earlyJobFits(Job* job) {
+    return this->instance->d - Heuristic::sumProcessingTimes(this->B)
+            >= job->processingTime;
 }

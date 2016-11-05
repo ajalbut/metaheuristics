@@ -6,6 +6,7 @@ class Heuristic {
 public:
     Instance * instance;
     int type;
+    vector<Job*> A, B;
     Heuristic(Instance * instance, int type);
     void calculateSchedule();
     void biskup1();
@@ -13,7 +14,7 @@ public:
     void construct();
     void sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B);
     int sumProcessingTimes(vector<Job*>);
-    int minProcessingTime(vector<Job*>);
+    bool earlyJobFits(Job* job);
 };
 
 
