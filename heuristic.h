@@ -12,6 +12,7 @@ public:
     void biskup1();
     void biskup2();
     void construct();
+    void localSearch();
     void sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B);
     int sumProcessingTimes(vector<Job*>);
     bool earlyJobFits(Job* job);

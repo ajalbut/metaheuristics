@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "heuristic.h"
 #include "controller.h"
 
@@ -17,7 +19,7 @@ void Controller::runAll() {
             for (int k = 0; k < heuristicTypes.size(); k++) {
                 this->run(
                         heuristicTypes[k], nValues[i], hValues[j],
-                        true, false
+                        true, true, false
                         );
             }
         }
@@ -31,39 +33,59 @@ void Controller::runBenchmark(int type) {
     float hV[4] = {0.2, 0.4, 0.6, 0.8};
     vector<float> hValues(hV, hV + 4);
 
-    vector<int> actualTargets = vector<int> (10);
+    vector<vector<int> > runTargets = vector<vector<int> > ();
+    float u_a_t_percentage = 0, a_i_t_percentage = 0, u_i_t_percentage = 0;
     for (int i = 0; i < nValues.size(); i++) {
         string inputPath = "upper_bound_" + nValues[i] + ".txt";
         vector<vector<int> > upperBoundTargets =
                 Parser::parseUpperBoundFile(inputPath);
         for (int j = 0; j < hValues.size(); j++) {
-            int upperBoundSum = 0, actualSum = 0;
-            actualTargets = this->run(
+            int upperBoundSum = 0, actualSum = 0, improvedSum = 0;
+            runTargets = this->run(
                     heuristicType, nValues[i], hValues[j],
-                    false, false);
-            for (int k = 0; k < actualTargets.size(); k++) {
+                    true, false, false);
+            for (int k = 0; k < runTargets.size(); k++) {
                 upperBoundSum += upperBoundTargets[k][j];
-                actualSum += actualTargets[k];
+                actualSum += runTargets[k][0];
+                improvedSum += runTargets[k][1];
             }
-            float percentage =
-                    (float) (actualSum - upperBoundSum) * 100 / upperBoundSum;
+            float u_a_percentage =
+                    (float) (actualSum - upperBoundSum) * 100 / upperBoundSum,
+                    a_i_percentage =
+                    (float) (improvedSum - actualSum) * 100 / actualSum,
+                    u_i_percentage =
+                    (float) (improvedSum - upperBoundSum) * 100 / upperBoundSum;
             cout << "Benchmark for n = " << nValues[i]
                     << ", h = " << hValues[j]
                     << ": upper bound sum = " << upperBoundSum
                     << ", actual sum = " << actualSum
-                    << ", difference = "
-                    << percentage << "%" << endl;
+                    << ", improved sum = " << improvedSum
+                    << ", upper to actual = " << u_a_percentage << "%"
+                    << ", actual to improved = " << a_i_percentage << "%"
+                    << ", upper to improved = " << u_i_percentage << "%"
+                    << endl;
+            u_a_t_percentage += u_a_percentage;
+            a_i_t_percentage += a_i_percentage;
+            u_i_t_percentage += u_i_percentage;
         }
     }
+
+    u_a_t_percentage /= 28.0;
+    a_i_t_percentage /= 28.0;
+    u_i_t_percentage /= 28.0;
+    cout << "Final results: upper to actual = " << u_a_t_percentage << "%"
+            << ", actual to improved = " << a_i_t_percentage << "%"
+            << ", upper to improved = " << u_i_t_percentage << "%"
+            << endl;
 }
 
-vector<int> Controller::run(
-        int heuristicType, string n, float h,
+vector<vector<int> > Controller::run(
+        int heuristicType, string n, float h, bool localSearch,
         bool printSummary, bool printSchedule
         ) {
     string inputPath = "sch" + n + ".txt";
     this->loadInstances(inputPath);
-    vector<int> targets = vector<int>(this->instances.size());
+    vector<vector<int> > targets = vector<vector<int> >();
 
     int s = this->instances.size();
     if (printSummary) {
@@ -81,13 +103,18 @@ vector<int> Controller::run(
             cout << "Due time: " << instance->d << endl;
         }
 
-        targets[i] = this->runInstance(instance, heuristicType);
+        targets.push_back(this->runInstance(instance, heuristicType,
+                localSearch));
         if (printSchedule) {
             instance->printSchedule();
         }
 
         if (printSummary) {
-            cout << "Target: " << targets[i] << endl;
+            cout << "Target: " << targets[i][0] << endl;
+            if (localSearch) {
+
+                cout << "Improved: " << targets[i][1] << endl;
+            }
             cout << endl;
         }
     }
@@ -95,11 +122,19 @@ vector<int> Controller::run(
 }
 
 void Controller::loadInstances(string inputPath) {
+
     this->instances = Parser::parseInputFile(inputPath);
 }
 
-int Controller::runInstance(Instance * instance, int heuristicType) {
+vector<int> Controller::runInstance(Instance * instance, int heuristicType,
+        bool localSearch) {
+    vector<int> targets = vector<int>();
     Heuristic * heuristic = new Heuristic(instance, heuristicType);
     heuristic->calculateSchedule();
-    return instance->calculateTarget();
+    targets.push_back(instance->calculateTarget());
+    if (localSearch) {
+        heuristic->localSearch();
+        targets.push_back(instance->calculateTarget());
+    }
+    return targets;
 }

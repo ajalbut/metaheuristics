@@ -8,10 +8,11 @@ public:
     Controller();
     void runAll();
     void runBenchmark(int type);
-    vector<int> run(int heuristicType, string n, float h,
-            bool printSummary, bool printSchedule);
+    vector<vector<int> > run(int heuristicType, string n, float h,
+            bool localSearch, bool printSummary, bool printSchedule);
     void loadInstances(string inputPath);
-    int runInstance(Instance * instance, int heuristicType);
+    vector<int> runInstance(Instance * instance, int heuristicType,
+            bool localSearch);
 };
 
 #endif /* CONTROLLER_H */

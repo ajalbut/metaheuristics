@@ -35,6 +35,19 @@ struct tard_earl_non_increasing {
     }
 };
 
+struct tard_earl_non_decreasing {
+
+    bool operator()(Job * a, Job * b) {
+        if (a->tardEarlRatio != b->tardEarlRatio) {
+            return a->tardEarlRatio < b->tardEarlRatio;
+        }
+        if (a->tardinessPenalty != b->tardinessPenalty) {
+            return a->tardinessPenalty < b->tardinessPenalty;
+        }
+        return a->id < b->id;
+    }
+};
+
 struct min_proc_ratio_non_decreasing {
 
     bool operator()(Job * a, Job * b) {
@@ -92,9 +105,8 @@ void Heuristic::biskup1() {
             }
         }
         if (targetDecreased) {
-            Job * shiftedJob = this->A[shiftIndex];
+            this->B.push_back(this->A[shiftIndex]);
             this->A.erase(this->A.begin() + shiftIndex);
-            this->B.push_back(shiftedJob);
         }
     }
     Heuristic::sequenceJobsVShaped(this->A, this->B);
@@ -181,6 +193,53 @@ void Heuristic::construct() {
             }
         }
         P.erase(P.begin());
+    }
+    Heuristic::sequenceJobsVShaped(this->A, this->B);
+}
+
+void Heuristic::localSearch() {
+    int lowestTarget = instance->calculateTarget();
+    sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
+    sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
+
+    int i = 0;
+    while (i < max(A.size(), B.size())) {
+        vector<Job*> A1 = this->A, B1 = this->B;
+        if (B1.size() > i) {
+            A1.push_back(B1[i]);
+            B1.erase(B1.begin() + i);
+            Heuristic::sequenceJobsVShaped(A1, B1);
+            int target = this->instance->calculateTarget();
+            if (target < lowestTarget) {
+                this->A = A1;
+                this->B = B1;
+                sort(this->A.begin(),
+                        this->A.end(), tard_earl_non_increasing());
+                sort(this->B.begin(),
+                        this->B.end(), tard_earl_non_decreasing());
+                lowestTarget = target;
+                i--;
+            }
+        }
+
+        A1 = this->A, B1 = this->B;
+        if (A1.size() > i and Heuristic::earlyJobFits(A1[i])) {
+            B1.push_back(A1[i]);
+            A1.erase(A1.begin() + i);
+            Heuristic::sequenceJobsVShaped(A1, B1);
+            int target = this->instance->calculateTarget();
+            if (target < lowestTarget) {
+                this->A = A1;
+                this->B = B1;
+                sort(this->A.begin(),
+                        this->A.end(), tard_earl_non_increasing());
+                sort(this->B.begin(),
+                        this->B.end(), tard_earl_non_decreasing());
+                lowestTarget = target;
+                i--;
+            }
+        }
+        i++;
     }
     Heuristic::sequenceJobsVShaped(this->A, this->B);
 }
