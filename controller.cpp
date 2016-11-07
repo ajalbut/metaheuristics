@@ -2,6 +2,7 @@
 
 #include "heuristic.h"
 #include "controller.h"
+#include <ctime>
 
 Controller::Controller() {
 }
@@ -128,13 +129,29 @@ void Controller::loadInstances(string inputPath) {
 
 vector<int> Controller::runInstance(Instance * instance, int heuristicType,
         bool localSearch) {
+    clock_t start, mid, end;
+
     vector<int> targets = vector<int>();
     Heuristic * heuristic = new Heuristic(instance, heuristicType);
+
+    start = clock();
     heuristic->calculateSchedule();
     targets.push_back(instance->calculateTarget());
+    mid = clock();
+    cout << "Heuristic time for n = " << instance->n
+            << ", h = " << instance->h << ": "
+            << (mid - start) / (double) (CLOCKS_PER_SEC / 1000)
+            << " ms" << std::endl;
+
     if (localSearch) {
         heuristic->localSearch();
         targets.push_back(instance->calculateTarget());
+        end = clock();
+
+        cout << "Local search time for n = " << instance->n
+                << ", h = " << instance->h << ": "
+                << (end - mid) / (double) (CLOCKS_PER_SEC / 1000)
+                << " ms" << std::endl;
     }
     return targets;
 }
