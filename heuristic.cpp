@@ -199,11 +199,14 @@ void Heuristic::construct() {
 
 void Heuristic::localSearch() {
     int lowestTarget = instance->calculateTarget();
-    sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
-    sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
 
     int i = 0;
     while (i < max(A.size(), B.size())) {
+        if (i == 0) {
+            sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
+            sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
+        }
+
         vector<Job*> A1 = this->A, B1 = this->B;
         if (B1.size() > i) {
             A1.push_back(B1[i]);
@@ -213,12 +216,9 @@ void Heuristic::localSearch() {
             if (target < lowestTarget) {
                 this->A = A1;
                 this->B = B1;
-                sort(this->A.begin(),
-                        this->A.end(), tard_earl_non_increasing());
-                sort(this->B.begin(),
-                        this->B.end(), tard_earl_non_decreasing());
                 lowestTarget = target;
-                i--;
+                i = 0;
+                continue;
             }
         }
 
@@ -231,12 +231,9 @@ void Heuristic::localSearch() {
             if (target < lowestTarget) {
                 this->A = A1;
                 this->B = B1;
-                sort(this->A.begin(),
-                        this->A.end(), tard_earl_non_increasing());
-                sort(this->B.begin(),
-                        this->B.end(), tard_earl_non_decreasing());
                 lowestTarget = target;
-                i--;
+                i = 0;
+                continue;
             }
         }
         i++;
