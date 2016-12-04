@@ -9,10 +9,11 @@ public:
     void runAll();
     void runBenchmark(int type);
     vector<vector<int> > run(int heuristicType, string n, float h,
-            bool localSearch, bool printSummary, bool printSchedule);
+            bool localSearch, bool tabuSearch,
+            bool printSummary, bool printSchedule);
     void loadInstances(string inputPath);
     vector<int> runInstance(Instance * instance, int heuristicType,
-            bool localSearch);
+            bool localSearch, bool tabuSearch);
 };
 
 #endif /* CONTROLLER_H */

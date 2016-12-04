@@ -1,5 +1,16 @@
+#include <algorithm>
 #include <math.h>
 #include "instance.h"
+
+struct start_time_increasing {
+
+    bool operator()(Job * a, Job * b) {
+        if (a->startTime != b->startTime) {
+            return a->startTime < b->startTime;
+        }
+        return a->id < b->id;
+    }
+};
 
 Instance::Instance(int n) {
     this->n = n;
@@ -40,12 +51,28 @@ void Instance::sequenceJobsLastToFirst(vector<Job*> jobs, int completionTime) {
     }
 }
 
+void Instance::sequenceJobsStartingFromZero() {
+    vector<Job*> jobs = this->jobs;
+    sort(jobs.begin(), jobs.end(), start_time_increasing());
+    int delta = jobs[0]->startTime;
+    for (int i = 0; i < this->jobs.size(); i++) {
+        this->jobs[i]->startTime = this->jobs[i]->startTime - delta;
+        this->jobs[i]->updateCompletionTime();
+    }
+}
+
 void Instance::printSchedule() {
     for (int i = 0; i < this->n; i++) {
         Job * job = this->jobs[i];
         cout << job->id << ": start " << job->startTime
                 << ", completion " << job->completionTime << endl;
     }
+    cout << "JobSequence: ";
+    vector<int> jobSequence = this->getJobSequence();
+    for (int i = 0; i < jobSequence.size(); i++) {
+        cout << jobSequence[i] << ", ";
+    }
+    cout << endl;
 }
 
 int Instance::calculateTarget() {
@@ -70,4 +97,15 @@ int Instance::calculatePartialTarget(vector <Job*> J) {
         target += tardiness * job->tardinessPenalty;
     }
     return target;
+}
+
+vector<int> Instance::getJobSequence() {
+    vector<int> jobSequence = vector<int>();
+    vector<Job*> jobs = this->jobs;
+
+    sort(jobs.begin(), jobs.end(), start_time_increasing());
+    for (int i = 0; i < jobs.size(); i++) {
+        jobSequence.push_back(jobs[i]->id);
+    }
+    return jobSequence;
 }

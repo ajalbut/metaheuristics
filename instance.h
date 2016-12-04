@@ -12,9 +12,11 @@ public:
     void calculateDueTime();
     void sequenceJobsFirstToLast(vector<Job*> jobs, int startTime);
     void sequenceJobsLastToFirst(vector<Job*> jobs, int completionTime);
+    void sequenceJobsStartingFromZero();
     void printSchedule();
     int calculateTarget();
     int calculatePartialTarget(vector<Job*> J);
+    vector<int> getJobSequence();
 };
 
 #endif /* INSTANCE_H */

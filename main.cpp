@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     } else if (heuristicType < 0) {
         controller->runBenchmark(heuristicType);
     } else {
-        controller->run(heuristicType, n, h, false, true, true);
+        controller->run(heuristicType, n, h, true, true, true, true);
     }
 
     return 0;
