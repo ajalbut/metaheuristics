@@ -245,13 +245,12 @@ void Heuristic::tabuSearch() {
     int lowestTarget = Heuristic::calculateLowestShiftedTarget(this->A, this->B);
 
     vector<Job*> bestA = this->A, bestB = this->B;
-    int previousSize = tabuList.size();
-    while ((!previousSize or previousSize != tabuList.size())
+    int skip = 0;
+    while (skip < max(this->A.size(), this->B.size())
             and tabuList.size() < 1000) {
-        previousSize = tabuList.size();
-        int i = 0;
+        int i = skip;
         while (i < max(this->A.size(), this->B.size())) {
-            if (i == 0) {
+            if (i == skip) {
                 sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
                 sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
             }
@@ -266,6 +265,7 @@ void Heuristic::tabuSearch() {
                     bestA = this->A = A1;
                     bestB = this->B = B1;
                     tabuList.push_back(this->instance->getJobSequence());
+                    skip = 0;
                     break;
                 } else if (!this->currentSequenceIsTabu(tabuList)) {
                     this->A = A1;
@@ -285,6 +285,7 @@ void Heuristic::tabuSearch() {
                     bestA = this->A = A1;
                     bestB = this->B = B1;
                     tabuList.push_back(this->instance->getJobSequence());
+                    skip = 0;
                     break;
                 } else if (!this->currentSequenceIsTabu(tabuList)) {
                     this->A = A1;
@@ -294,6 +295,12 @@ void Heuristic::tabuSearch() {
                 }
             }
             i++;
+        }
+        if (i == max(this->A.size(), this->B.size())) {
+            while (tabuList.size() > 1) {
+                tabuList.erase(tabuList.begin());
+            }
+            skip++;
         }
     }
     Heuristic::calculateLowestShiftedTarget(bestA, bestB);
