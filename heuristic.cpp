@@ -3,7 +3,7 @@
 #include <math.h>
 #include "heuristic.h"
 
-struct proc_earl_ratios_non_increasing {
+struct proc_earl_ratios_non_incr {
 
     bool operator()(Job * a, Job * b) {
         if (a->procEarlRatio != b->procEarlRatio) {
@@ -13,7 +13,7 @@ struct proc_earl_ratios_non_increasing {
     }
 };
 
-struct proc_tard_ratios_non_decreasing {
+struct proc_tard_ratios_non_decr {
 
     bool operator()(Job * a, Job * b) {
         if (a->procTardRatio != b->procTardRatio) {
@@ -23,7 +23,7 @@ struct proc_tard_ratios_non_decreasing {
     }
 };
 
-struct tard_earl_non_increasing {
+struct tard_earl_non_incr {
 
     bool operator()(Job * a, Job * b) {
         if (a->tardEarlRatio != b->tardEarlRatio) {
@@ -36,7 +36,7 @@ struct tard_earl_non_increasing {
     }
 };
 
-struct tard_earl_non_decreasing {
+struct tard_earl_non_decr {
 
     bool operator()(Job * a, Job * b) {
         if (a->tardEarlRatio != b->tardEarlRatio) {
@@ -49,7 +49,7 @@ struct tard_earl_non_decreasing {
     }
 };
 
-struct min_proc_ratio_non_decreasing {
+struct min_proc_ratio_non_decr {
 
     bool operator()(Job * a, Job * b) {
         float minRatioA = min(a->procEarlRatio, a->procTardRatio),
@@ -121,7 +121,7 @@ void Heuristic::biskup2() {
     for (int i = 0; i < n; i++) {
         P.push_back(instance->jobs[i]);
     }
-    sort(P.begin(), P.end(), tard_earl_non_increasing());
+    sort(P.begin(), P.end(), tard_earl_non_incr());
 
     int shiftIndex = 0;
     while (this->B.size() < n / 2 and shiftIndex < P.size()) {
@@ -170,7 +170,7 @@ void Heuristic::construct() {
     for (int i = 0; i < this->instance->n; i++) {
         P.push_back(instance->jobs[i]);
     }
-    sort(P.begin(), P.end(), min_proc_ratio_non_decreasing());
+    sort(P.begin(), P.end(), min_proc_ratio_non_decr());
     while (P.size()) {
         vector<Job*> A1 = this->A, B1 = this->B;
 
@@ -200,15 +200,13 @@ void Heuristic::construct() {
 
 void Heuristic::localSearch() {
     int lowestTarget = this->calculateLowestShiftedTarget(this->A, this->B);
-
     int i = 0;
     bool AtoB = true;
     while (i < max(this->A.size(), this->B.size())) {
         if (i == 0 and AtoB) {
-            sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
-            sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
+            sort(this->A.begin(), this->A.end(), tard_earl_non_incr());
+            sort(this->B.begin(), this->B.end(), tard_earl_non_decr());
         }
-
         AtoB = !AtoB;
         vector<Job*> A1 = this->A, B1 = this->B;
         if (!AtoB and B1.size() > i) {
@@ -219,12 +217,9 @@ void Heuristic::localSearch() {
             B1.push_back(A1[i]);
             A1.erase(A1.begin() + i);
         } else {
-            if (AtoB) {
-                i++;
-            }
+            if (AtoB) i++;
             continue;
         }
-
         int target = this->calculateLowestShiftedTarget(A1, B1);
         if (target < lowestTarget) {
             this->A = A1;
@@ -234,9 +229,7 @@ void Heuristic::localSearch() {
             AtoB = true;
             continue;
         }
-        if (AtoB) {
-            i++;
-        }
+        if (AtoB) i++;
     }
     this->calculateLowestShiftedTarget(this->A, this->B);
 }
@@ -244,7 +237,6 @@ void Heuristic::localSearch() {
 void Heuristic::tabuSearch() {
     vector<vector<int> > tabuList = vector<vector<int> >();
     int lowestTarget = this->calculateLowestShiftedTarget(this->A, this->B);
-
     vector<Job*> bestA = this->A, bestB = this->B;
     int skip = 0;
     bool lock = false, end = false;
@@ -256,17 +248,13 @@ void Heuristic::tabuSearch() {
             this->A = bestA;
             this->B = bestB;
         }
-
         int i = skip;
         bool AtoB = true;
         while (i < max(this->A.size(), this->B.size())) {
             if (i == skip and AtoB) {
-                sort(this->A.begin(), this->A.end(),
-                        tard_earl_non_increasing());
-                sort(this->B.begin(), this->B.end(),
-                        tard_earl_non_decreasing());
+                sort(this->A.begin(), this->A.end(), tard_earl_non_incr());
+                sort(this->B.begin(), this->B.end(), tard_earl_non_decr());
             }
-
             AtoB = !AtoB;
             vector<Job*> A1 = this->A, B1 = this->B;
             if (!AtoB and B1.size() > i) {
@@ -277,12 +265,9 @@ void Heuristic::tabuSearch() {
                 B1.push_back(A1[i]);
                 A1.erase(A1.begin() + i);
             } else {
-                if (AtoB) {
-                    i++;
-                }
+                if (AtoB) i++;
                 continue;
             }
-
             int target = this->calculateLowestShiftedTarget(A1, B1);
             if (target < lowestTarget) {
                 lowestTarget = target;
@@ -303,9 +288,7 @@ void Heuristic::tabuSearch() {
                 tabuList.push_back(this->instance->getJobSequence());
                 break;
             }
-            if (AtoB) {
-                i++;
-            }
+            if (AtoB) i++;
         }
         if (i >= max(this->A.size(), this->B.size())) {
             if (lock) {
@@ -320,8 +303,8 @@ void Heuristic::tabuSearch() {
 }
 
 void Heuristic::sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B) {
-    sort(A.begin(), A.end(), proc_tard_ratios_non_decreasing());
-    sort(B.begin(), B.end(), proc_earl_ratios_non_increasing());
+    sort(A.begin(), A.end(), proc_tard_ratios_non_decr());
+    sort(B.begin(), B.end(), proc_earl_ratios_non_incr());
     this->instance->sequenceJobsFirstToLast(A, this->instance->d);
     this->instance->sequenceJobsLastToFirst(B, this->instance->d);
 }
