@@ -7,7 +7,7 @@ class Controller {
 public:
     Controller();
     void runAll();
-    void runBenchmark(int type);
+    void runBenchmark(int type, bool tabuSearch);
     vector<vector<int> > run(int heuristicType, string n, float h,
             bool localSearch, bool tabuSearch,
             bool printSummary, bool printSchedule);

@@ -13,9 +13,12 @@ int main(int argc, char** argv) {
         cout << "[1]: Biskup/Feldmann 1" << endl;
         cout << "[2]: Biskup/Feldmann 2" << endl;
         cout << "[3]: Constructive - min(proc/earl, proc/tard)" << endl;
-        cout << "[-1]: Benchmark mode for [1]" << endl;
-        cout << "[-2]: Benchmark mode for [2]" << endl;
-        cout << "[-3]: Benchmark mode for [3]" << endl;
+        cout << "[-1]: Benchmark mode for [1] with local search" << endl;
+        cout << "[-2]: Benchmark mode for [2] with local search" << endl;
+        cout << "[-3]: Benchmark mode for [3] with local search" << endl;
+        cout << "[-10]: Benchmark mode for [1] with tabu search" << endl;
+        cout << "[-20]: Benchmark mode for [2] with tabu search" << endl;
+        cout << "[-30]: Benchmark mode for [3] with tabu search" << endl;
         cin >> heuristicType;
     }
 
@@ -35,10 +38,12 @@ int main(int argc, char** argv) {
     Controller * controller = new Controller();
     if (heuristicType == 0) {
         controller->runAll();
+    } else if (heuristicType < -9) {
+        controller->runBenchmark(heuristicType, true);
     } else if (heuristicType < 0) {
-        controller->runBenchmark(heuristicType);
+        controller->runBenchmark(heuristicType, false);
     } else {
-        controller->run(heuristicType, n, h, true, true, true, true);
+        controller->run(heuristicType, n, h, false, true, true, true);
     }
 
     return 0;

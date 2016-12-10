@@ -92,12 +92,12 @@ void Heuristic::biskup1() {
         targetDecreased = false;
         for (int i = 0; i < this->A.size(); i++) {
             vector<Job*> A1 = this->A, B1 = this->B;
-            if (!Heuristic::earlyJobFits(A1[i])) {
+            if (!this->earlyJobFits(A1[i], this->B)) {
                 break;
             }
             B1.push_back(A1[i]);
             A1.erase(A1.begin() + i);
-            Heuristic::sequenceJobsVShaped(A1, B1);
+            this->sequenceJobsVShaped(A1, B1);
             int target = instance->calculateTarget();
             if (target < lowestTarget) {
                 targetDecreased = true;
@@ -110,7 +110,7 @@ void Heuristic::biskup1() {
             this->A.erase(this->A.begin() + shiftIndex);
         }
     }
-    Heuristic::sequenceJobsVShaped(this->A, this->B);
+    this->sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::biskup2() {
@@ -125,7 +125,7 @@ void Heuristic::biskup2() {
 
     int shiftIndex = 0;
     while (this->B.size() < n / 2 and shiftIndex < P.size()) {
-        if (!Heuristic::earlyJobFits(P[shiftIndex])) {
+        if (!this->earlyJobFits(P[shiftIndex], this->B)) {
             shiftIndex++;
             continue;
         }
@@ -137,7 +137,7 @@ void Heuristic::biskup2() {
         this->A.push_back(P[i]);
     }
 
-    Heuristic::sequenceJobsVShaped(this->A, this->B);
+    this->sequenceJobsVShaped(this->A, this->B);
 
     if (this->B.size() < n / 2) {
         return;
@@ -148,10 +148,10 @@ void Heuristic::biskup2() {
         vector<Job*> A1 = P, B1 = this->B;
         A1.erase(A1.begin());
         B1.push_back(P[0]);
-        Heuristic::sequenceJobsVShaped(A1, B1);
+        this->sequenceJobsVShaped(A1, B1);
         target = instance->calculateTarget();
         if (target <= lowestTarget) {
-            if (!Heuristic::earlyJobFits(P[0])) {
+            if (!this->earlyJobFits(P[0], this->B)) {
                 break;
             }
             P.erase(P.begin());
@@ -160,7 +160,7 @@ void Heuristic::biskup2() {
             lowestTarget = target;
         }
     }
-    Heuristic::sequenceJobsVShaped(this->A, this->B);
+    this->sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::construct() {
@@ -174,16 +174,16 @@ void Heuristic::construct() {
     while (P.size()) {
         vector<Job*> A1 = this->A, B1 = this->B;
 
-        if (!Heuristic::earlyJobFits(P[0])) {
+        if (!this->earlyJobFits(P[0], this->B)) {
             this->A.push_back(P[0]);
         } else {
             A1.push_back(P[0]);
-            Heuristic::sequenceJobsVShaped(A1, this->B);
+            this->sequenceJobsVShaped(A1, this->B);
             A1.insert(A1.end(), this->B.begin(), this->B.end());
             int jobAfterTarget = this->instance->calculatePartialTarget(A1);
 
             B1.push_back(P[0]);
-            Heuristic::sequenceJobsVShaped(this->A, B1);
+            this->sequenceJobsVShaped(this->A, B1);
             B1.insert(B1.end(), this->A.begin(), this->A.end());
             int jobBeforeTarget = this->instance->calculatePartialTarget(B1);
 
@@ -195,54 +195,55 @@ void Heuristic::construct() {
         }
         P.erase(P.begin());
     }
-    Heuristic::sequenceJobsVShaped(this->A, this->B);
+    this->sequenceJobsVShaped(this->A, this->B);
 }
 
 void Heuristic::localSearch() {
-    int lowestTarget = Heuristic::calculateLowestShiftedTarget(this->A, this->B);
+    int lowestTarget = this->calculateLowestShiftedTarget(this->A, this->B);
 
     int i = 0;
+    bool AtoB = true;
     while (i < max(this->A.size(), this->B.size())) {
-        if (i == 0) {
+        if (i == 0 and AtoB) {
             sort(this->A.begin(), this->A.end(), tard_earl_non_increasing());
             sort(this->B.begin(), this->B.end(), tard_earl_non_decreasing());
         }
 
+        AtoB = !AtoB;
         vector<Job*> A1 = this->A, B1 = this->B;
-        if (B1.size() > i) {
+        if (!AtoB and B1.size() > i) {
             A1.push_back(B1[i]);
             B1.erase(B1.begin() + i);
-            int target = Heuristic::calculateLowestShiftedTarget(A1, B1);
-            if (target < lowestTarget) {
-                this->A = A1;
-                this->B = B1;
-                lowestTarget = target;
-                i = 0;
-                continue;
-            }
-        }
-
-        A1 = this->A, B1 = this->B;
-        if (A1.size() > i and Heuristic::earlyJobFits(A1[i])) {
+        } else if (AtoB and A1.size() > i
+                and this->earlyJobFits(A1[i], this->B)) {
             B1.push_back(A1[i]);
             A1.erase(A1.begin() + i);
-            int target = Heuristic::calculateLowestShiftedTarget(A1, B1);
-            if (target < lowestTarget) {
-                this->A = A1;
-                this->B = B1;
-                lowestTarget = target;
-                i = 0;
-                continue;
+        } else {
+            if (AtoB) {
+                i++;
             }
+            continue;
         }
-        i++;
+
+        int target = this->calculateLowestShiftedTarget(A1, B1);
+        if (target < lowestTarget) {
+            this->A = A1;
+            this->B = B1;
+            lowestTarget = target;
+            i = 0;
+            AtoB = true;
+            continue;
+        }
+        if (AtoB) {
+            i++;
+        }
     }
-    Heuristic::calculateLowestShiftedTarget(this->A, this->B);
+    this->calculateLowestShiftedTarget(this->A, this->B);
 }
 
 void Heuristic::tabuSearch() {
     vector<vector<int> > tabuList = vector<vector<int> >();
-    int lowestTarget = Heuristic::calculateLowestShiftedTarget(this->A, this->B);
+    int lowestTarget = this->calculateLowestShiftedTarget(this->A, this->B);
 
     vector<Job*> bestA = this->A, bestB = this->B;
     int skip = 0;
@@ -276,7 +277,7 @@ void Heuristic::tabuSearch() {
             }
 
             A1 = this->A, B1 = this->B;
-            if (A1.size() > i and Heuristic::earlyJobFits(A1[i])) {
+            if (A1.size() > i and Heuristic::earlyJobFits(A1[i], this->B)) {
                 B1.push_back(A1[i]);
                 A1.erase(A1.begin() + i);
                 int target = Heuristic::calculateLowestShiftedTarget(A1, B1);
@@ -303,7 +304,7 @@ void Heuristic::tabuSearch() {
             skip++;
         }
     }
-    Heuristic::calculateLowestShiftedTarget(bestA, bestB);
+    this->calculateLowestShiftedTarget(bestA, bestB);
 }
 
 void Heuristic::sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B) {
@@ -321,13 +322,13 @@ int Heuristic::sumProcessingTimes(vector<Job*> jobs) {
     return totalTime;
 };
 
-bool Heuristic::earlyJobFits(Job* job) {
-    return this->instance->d - Heuristic::sumProcessingTimes(this->B)
+bool Heuristic::earlyJobFits(Job* job, vector<Job*> &B) {
+    return this->instance->d - this->sumProcessingTimes(B)
             >= job->processingTime;
 }
 
 int Heuristic::calculateLowestShiftedTarget(vector<Job*> &A, vector<Job*> &B) {
-    Heuristic::sequenceJobsVShaped(A, B);
+    this->sequenceJobsVShaped(A, B);
     int unshiftedTarget = this->instance->calculateTarget();
 
     this->instance->sequenceJobsStartingFromZero();
@@ -336,7 +337,7 @@ int Heuristic::calculateLowestShiftedTarget(vector<Job*> &A, vector<Job*> &B) {
     if (shiftedTarget < unshiftedTarget) {
         return shiftedTarget;
     } else {
-        Heuristic::sequenceJobsVShaped(A, B);
+        this->sequenceJobsVShaped(A, B);
         return unshiftedTarget;
     }
 }

@@ -16,7 +16,7 @@ public:
     void tabuSearch();
     void sequenceJobsVShaped(vector<Job*> &A, vector<Job*> &B);
     int sumProcessingTimes(vector<Job*>);
-    bool earlyJobFits(Job* job);
+    bool earlyJobFits(Job* job, vector<Job*> &B);
     int calculateLowestShiftedTarget(vector<Job*> &A, vector<Job*> &B);
     bool currentSequenceIsTabu(vector<vector<int> > tabuList);
 };
